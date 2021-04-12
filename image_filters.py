@@ -34,6 +34,12 @@ import numpy as np
 from numpy.matlib import repmat
 from scipy.signal import convolve2d
 
+def CapIntensity(img_in, bpp):
+    img_out = img_in;
+    img_out[img_out < 0] = 0;
+    img_out[img_out > (bpp - 1)] = bpp - 1;
+    return img_out;
+
 def ImageNormalization(img_in, normalization, bpp):
     if normalization == 'bpp':
         N = bpp - 1;
@@ -327,7 +333,7 @@ def SpatiallyAdaptiveOrderStatisticFilter(img_in, noise_sigma, kernel_size, filt
 def HighBoostFilter(img_in, alpha, method, bpp):
     # performs high boost filtering (edge enhancement)
     # method - method for edge enhancement: laplacian or gaussian
-    # alpha - edge enhancement factor (alpha > 0 for emphasizing and alpha < 0 for de-emphasizing)
+    # alpha - edge enhancement factor (alpha > 0 for enhancement and alpha < 0 for de-enhancement)
     # bpp - bits per pixel
     
     if method == 'laplacian':
@@ -336,22 +342,20 @@ def HighBoostFilter(img_in, alpha, method, bpp):
                            [-alpha, -alpha, -alpha]]);
         
         img_out = convolve2d(img_in, kernel, boundary = 'symm', mode = 'same');
-        img_out[img_out < 0] = 0;
-        img_out[img_out > (bpp - 1)] = bpp - 1;
+        img_out = CapIntensity(img_out, bpp);
         
     if method == 'gaussian':
         kernel = GaussianKernel2D(kernel_size = 7, sigma = 3);
         img_in_LP = convolve2d(img_in, kernel, boundary = 'symm', mode = 'same');
         img_out = img_in + alpha * (img_in - img_in_LP);
-        img_out[img_out < 0] = 0;
-        img_out[img_out > (bpp - 1)] = bpp - 1;
+        img_out = CapIntensity(img_out, bpp);
     
     return img_out;
 
 def HomomorphicFilter(img_in, alpha1, alpha2, bpp):
     # performs homomorphic filtering (contrast enhancement in black and bright regions)
     # alpha1 - weighting factor for illumination image (alpha1 <= 1)
-    # alpha2 - weighting factor for reflectance image (alpha2 >= 1)
+    # alpha2 - weighting factor for reflectance image (alpha2 > 1)
     # bpp - bits per pixel
     
     kernel_size = 7;
@@ -370,8 +374,7 @@ def HomomorphicFilter(img_in, alpha1, alpha2, bpp):
     img_reflectance = np.exp(alpha2 * log_img_reflectance);
     
     img_out = img_illumination * img_reflectance;
-    img_out[img_out < 0] = 0;
-    img_out[img_out > (bpp - 1)] = bpp - 1;    
+    img_out = CapIntensity(img_out, bpp);
     
     return img_out;
     
