@@ -2,28 +2,29 @@
 A whole arsenal of image processing filters
 
 The following filters have been implemented:<br/>
-* HistEqualization
 
-* LocalHistEqualization
+* Histogram equalization
 
-* SpatiallyAdaptiveSmoothingFilter (preserves edges):
+* Local histogram equalization
+
+* Spatially adaptive smoothing filters (preserve edges):
   * flat kernel (application: uniform and Gaussian noise)
   * gaussian kernel (application: uniform and Gaussian noise)
   
-* OrderStatisticFilter
+* Order statistic filters
   * Median kernel (application: impulsive noise)
   * Min kernel (application: salt noise)
   * Max kernel (application: pepper noise)
   * Mid-point kernel (application: uniform and Gaussian noise)
   * Alpha-trimmed-mean kernel (application: Gaussian + impulsive noise)
   
-* SpatiallyAdaptiveOrderStatisticFilter (preserves edges):
+* Spatially adaptive order statistic filters (preserve edges):
   * Median kernel (application: impulsive noise)
   * Min kernel (application: salt noise)
   * Max kernel (application: pepper noise)
   * Mid-point kernel (application: uniform and Gaussian noise)
   * Alpha-trimmed-mean kernel (application: Gaussian + impulsive noise)
   
-* HighBoostFilter
+* High boost filter (application: edge enhancement and de-enhancement)
 
-* HomomorphicFilter
+* Homomorphic filter (application: contrast enhancement in dark and bright regions)
