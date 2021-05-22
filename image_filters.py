@@ -1,7 +1,7 @@
 '''
 image_filters.py
 
-Arsenal of image processing filters:
+Arsenal of image processing filters (in spatial domain):
     
 * Histogram equalization
 
@@ -25,6 +25,17 @@ Arsenal of image processing filters:
   * Mid-point kernel (application: uniform and Gaussian noise)
   * Alpha-trimmed-mean kernel (application: Gaussian + impulsive noise)
   
+* Spatially adaptive smoothing Wiener filters (preserve edges):
+  * flat kernel (application: uniform and Gaussian noise)
+  * gaussian kernel (application: uniform and Gaussian noise)
+  
+* Spatially adaptive order statistic Wiener filters (preserve edges):
+  * Median kernel (application: impulsive noise)
+  * Min kernel (application: salt noise)
+  * Max kernel (application: pepper noise)
+  * Mid-point kernel (application: uniform and Gaussian noise)
+  * Alpha-trimmed-mean kernel (application: Gaussian + impulsive noise)
+    
 * High boost filter (application: edge enhancement and de-enhancement)
 
 * Homomorphic filter (application: contrast enhancement in dark and bright regions)
@@ -34,13 +45,34 @@ import numpy as np
 from numpy.matlib import repmat
 from scipy.signal import convolve2d
 
+def CalculateISNR(image_original, image_degraded, image_restored):
+    # Calculates (ISNR) improvement in SNR
+    
+    x = image_original;
+    N1, N2 = x.shape;
+    y = image_degraded;
+    x_r = image_restored;
+    
+    top = np.sum((x - y) ** 2);
+    bottom = np.sum((x - x_r) ** 2);
+    ISNR = 10 * np.log10(top / bottom);
+    return ISNR;
+
 def CapIntensity(img_in, bpp):
+    # Caps image intensity between 0 and bpp
+    # bpp - bits per pixel
+    
     img_out = img_in;
     img_out[img_out < 0] = 0;
     img_out[img_out > (bpp - 1)] = bpp - 1;
     return img_out;
 
 def ImageNormalization(img_in, normalization, bpp):
+    # Performs image normalization
+    # Normalized images comes from the same distribution
+    
+    if normalization == 'mean':
+        img_out = (img_in - np.mean(img_in));    
     if normalization == 'bpp':
         N = bpp - 1;
         img_out = (img_in - np.mean(img_in)) / N;    
@@ -57,7 +89,7 @@ def ImageNormalization(img_in, normalization, bpp):
     return img_out, N;
 
 def GaussianKernel1D(kernel_size, sigma):
-    # returns 1D Gaussian kernel
+    # Returns 1D Gaussian kernel
     
     kn = int((kernel_size - 1) / 2);
     X = np.arange(-kn, kn + 1, 1);
@@ -66,13 +98,13 @@ def GaussianKernel1D(kernel_size, sigma):
     return kernel;
 
 def FlatKernel1D(kernel_size):
-    # returns 1D flat kernel
+    # Returns 1D flat kernel
     
     kernel = np.ones((1, kernel_size)) / kernel_size;
     return kernel;
 
 def GaussianKernel2D(kernel_size, sigma):
-    # returns 2D Gaussian kernel
+    # Returns 2D Gaussian kernel
     
     kn = int((kernel_size - 1) / 2);
     x = np.arange(-kn, kn + 1, 1);
@@ -82,13 +114,13 @@ def GaussianKernel2D(kernel_size, sigma):
     return kernel;
 
 def FlatKernel2D(kernel_size):
-    # returns 2D flat kernel
+    # Returns 2D flat kernel
     
     kernel = np.ones((kernel_size, kernel_size)) / kernel_size ** 2;
     return kernel;
 
 def TakeCareOfBoundaries(img_in, kernel_size, boundary = 'edge', fill_value = None):
-    # takes care of image boundaries and returns a properly padded image
+    # Takes care of image boundaries and returns a properly padded image
     # boundary - boundary condition: edge or fill (with fill_value)
     
     nr, nc = img_in.shape;
@@ -133,7 +165,7 @@ def TakeCareOfBoundaries(img_in, kernel_size, boundary = 'edge', fill_value = No
     return img_in_padded;
 
 def HistEqualization(img_in, bpp):
-    # performs global histogram equalization
+    # pPrforms global histogram equalization
     # bpp - bits per pixel
     
     histogram, _ = np.histogram(img_in, bins = bpp, range = (0, bpp-1));
@@ -150,7 +182,7 @@ def HistEqualization(img_in, bpp):
     return img_out;
 
 def LocalHistEqualization(img_in, bpp, kernel_size, boundary = 'edge', fill_value = None):
-    # performs local neighborhood histogram equalization
+    # Performs local neighborhood (spatially adaptive) histogram equalization
     # bpp - bits per pixel
     # kernel_size - kernel size (3, 5, ..)
     # boundary - boundary condition: edge or fill (with fill_value)
@@ -171,7 +203,7 @@ def LocalHistEqualization(img_in, bpp, kernel_size, boundary = 'edge', fill_valu
     return img_out;
 
 def SpatiallyAdaptiveSmoothingFilter(img_in, noise_sigma, kernel_size, filter_type, kernel_sigma = None, boundary = 'edge', fill_value = None):
-    # performs spatially adaptive filtering (preserves edges)
+    # Performs spatially adaptive smoothing filtering (preserves edges)
     # noise_sigma - noise standard deviation estimated from a flat image region
     # kernel_size - kernel size
     # filter_type - filter type: flat or gaussian (with kernel_sigma)
@@ -212,7 +244,7 @@ def SpatiallyAdaptiveSmoothingFilter(img_in, noise_sigma, kernel_size, filter_ty
     return img_out;
 
 def OrderStatisticFilter(img_in, kernel_size, filter_type, alpha = None, boundary = 'edge', fill_value = None):
-    # performs nonlinear filtering
+    # Performs nonlinear filtering
     # kernel_size - kernel size (3, 5, ..)
     # filter_type - filter type: median, min, max, mid-point, or alpha-trimmed-mean (with alpha)
     # alpha - delete N = alpha (1, 2, ..) numbers at the begining and at the end of the array 
@@ -270,7 +302,7 @@ def OrderStatisticFilter(img_in, kernel_size, filter_type, alpha = None, boundar
     return img_out;
 
 def SpatiallyAdaptiveOrderStatisticFilter(img_in, noise_sigma, kernel_size, filter_type, alpha = None, boundary = 'edge', fill_value = None):
-    # performs spatially adaptive nonlinear filtering (preserves edges)
+    # Performs spatially adaptive nonlinear filtering (preserves edges)
     # noise_sigma - noise standard deviation estimated from a flat image region
     # kernel_size - kernel size (3, 5, ..)
     # filter_type - filter type: median, min, max, mid-point, or alpha-trimmed-mean (with alpha)
@@ -330,8 +362,110 @@ def SpatiallyAdaptiveOrderStatisticFilter(img_in, noise_sigma, kernel_size, filt
 
     return img_out;
 
+def SpatiallyAdaptiveSmoothingWienerFilter(img_in, noise_sigma, kernel_size, filter_type, kernel_sigma = None, boundary = 'edge', fill_value = None):
+    # Performs spatially adaptive smoothing Wiener filtering (preserves edges)
+    # noise_sigma - noise standard deviation estimated from a flat image region
+    # kernel_size - kernel size
+    # filter_type - filter type: flat or gaussian (with kernel_sigma)
+    # kernel_sigma - sigma for gaussian kernel
+    # boundary - boundary condition: edge or fill (with fill_value)
+    # application: uniform and Gaussian noise
+    
+    nr, nc = img_in.shape;
+    nr = int(nr);
+    nc = int(nc);
+    kn = int((kernel_size - 1) / 2);
+
+    if filter_type == 'flat':
+        kernel = FlatKernel1D(kernel_size);
+    if filter_type == 'gaussian':
+        kernel = GaussianKernel1D(kernel_size, kernel_sigma);
+    
+    # 1D filtering in X dir
+    img_in_padded = TakeCareOfBoundaries(img_in, kernel_size, boundary, fill_value);  
+    img_out = np.zeros(img_in.shape);
+    for ii in range(0, img_out.shape[0]):
+        for jj in range(0, img_out.shape[1]):
+            nb = img_in_padded[ii + kn, jj:jj + kernel_size];
+            nb_sigma = np.std(nb);
+            nb_filtered = np.sum(nb * kernel);
+            img_out[ii, jj] = nb_sigma ** 2 / (nb_sigma ** 2 + noise_sigma ** 2) * nb[kn] + noise_sigma ** 2 / (nb_sigma ** 2 + noise_sigma ** 2) * nb_filtered;
+
+    # 1D filtering in Y dir
+    img_in_padded = TakeCareOfBoundaries(img_out, kernel_size, boundary, fill_value); 
+    img_out = np.zeros(img_in.shape);
+    for ii in range(0, img_out.shape[0]):
+        for jj in range(0, img_out.shape[1]):
+            nb = img_in_padded[ii:ii + kernel_size, jj + kn];
+            nb_sigma = np.std(nb);
+            nb_filtered = np.sum(nb * kernel);           
+            img_out[ii, jj] = nb_sigma ** 2 / (nb_sigma ** 2 + noise_sigma ** 2) * nb[kn] + noise_sigma ** 2 / (nb_sigma ** 2 + noise_sigma ** 2) * nb_filtered;
+
+    return img_out;
+
+def SpatiallyAdaptiveOrderStatisticWienerFilter(img_in, noise_sigma, kernel_size, filter_type, alpha = None, boundary = 'edge', fill_value = None):
+    # Performs spatially adaptive nonlinear Wiener filtering (preserves edges)
+    # noise_sigma - noise standard deviation estimated from a flat image region
+    # kernel_size - kernel size (3, 5, ..)
+    # filter_type - filter type: median, min, max, mid-point, or alpha-trimmed-mean (with alpha)
+    # alpha - delete N = alpha (1, 2, ..) numbers at the begining and at the end of the array 
+    # boundary - boundary condition: edge or fill (with fill_value)
+    # application: median (impulsive noise), min (salt noise), max (pepper noise)
+    #   mid-point (uniform and Gaussian noise), alpha-trimmed-mean (Gaussian + impulsive noise)
+    
+    nr, nc = img_in.shape;
+    nr = int(nr);
+    nc = int(nc);
+    kn = int((kernel_size - 1) / 2);
+
+    # 1D filtering in X dir
+    img_in_padded = TakeCareOfBoundaries(img_in, kernel_size, boundary, fill_value);  
+    img_out = np.zeros(img_in.shape);
+    for ii in range(0, img_out.shape[0]):
+        for jj in range(0, img_out.shape[1]):
+            nb = img_in_padded[ii + kn, jj:jj + kernel_size];
+            nb_sigma = np.std(nb);
+            
+            if filter_type == 'median':
+                nb_filtered = np.median(nb);
+            if filter_type == 'min':
+                nb_filtered = np.min(nb);
+            if filter_type == 'max':
+                nb_filtered = np.max(nb);                
+            if filter_type == 'mid-point':
+                nb_filtered = (np.min(nb) + np.max(nb)) / 2;  
+            if filter_type == 'alpha-trimmed-mean':
+                nb_sorted = np.sort(nb);
+                nb_filtered = np.sum(nb_sorted[int(alpha):int(kernel_size - alpha)]) / (kernel_size - 2 * alpha);
+                
+            img_out[ii, jj] = nb_sigma ** 2 / (nb_sigma ** 2 + noise_sigma ** 2) * nb[kn] + noise_sigma ** 2 / (nb_sigma ** 2 + noise_sigma ** 2) * nb_filtered;
+
+    # 1D filtering in Y dir
+    img_in_padded = TakeCareOfBoundaries(img_out, kernel_size, boundary, fill_value); 
+    img_out = np.zeros(img_in.shape);
+    for ii in range(0, img_out.shape[0]):
+        for jj in range(0, img_out.shape[1]):
+            nb = img_in_padded[ii:ii + kernel_size, jj + kn];
+            nb_sigma = np.std(nb);
+            
+            if filter_type == 'median':
+                nb_filtered = np.median(nb);
+            if filter_type == 'min':
+                nb_filtered = np.min(nb);
+            if filter_type == 'max':
+                nb_filtered = np.max(nb);                
+            if filter_type == 'mid-point':
+                nb_filtered = (np.min(nb) + np.max(nb)) / 2;  
+            if filter_type == 'alpha-trimmed-mean':
+                nb_sorted = np.sort(nb);
+                nb_filtered = np.sum(nb_sorted[int(alpha):int(kernel_size - alpha)]) / (kernel_size - 2 * alpha);
+                
+            img_out[ii, jj] = nb_sigma ** 2 / (nb_sigma ** 2 + noise_sigma ** 2) * nb[kn] + noise_sigma ** 2 / (nb_sigma ** 2 + noise_sigma ** 2) * nb_filtered;
+
+    return img_out;
+
 def HighBoostFilter(img_in, alpha, method, bpp):
-    # performs high boost filtering (edge enhancement)
+    # Performs high boost filtering (edge enhancement)
     # method - method for edge enhancement: laplacian or gaussian
     # alpha - edge enhancement factor (alpha > 0 for enhancement and alpha < 0 for de-enhancement)
     # bpp - bits per pixel
@@ -353,7 +487,7 @@ def HighBoostFilter(img_in, alpha, method, bpp):
     return img_out;
 
 def HomomorphicFilter(img_in, alpha1, alpha2, bpp):
-    # performs homomorphic filtering (contrast enhancement in black and bright regions)
+    # Performs homomorphic filtering (contrast enhancement in black and bright regions)
     # alpha1 - weighting factor for illumination image (alpha1 <= 1)
     # alpha2 - weighting factor for reflectance image (alpha2 > 1)
     # bpp - bits per pixel
