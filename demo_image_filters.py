@@ -59,7 +59,7 @@ ISNR_2 = CalculateISNR(image_cut, image_cut_add_noise, image_restored_2);
 print(method)
 print(str(ISNR_2) + '\n')
 
-method = 'SpatiallyAdaptiveSmoothingFilter';
+method = 'SpatiallyAdaptiveSmoothingWienerFilter';
 img_in = image_cut_add_noise;
 noise_sigma = sigma;
 kernel_size = 7;
