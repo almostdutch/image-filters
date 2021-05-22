@@ -39,15 +39,15 @@ Arsenal of image processing filters (in spatial domain):
 
 **Dummy dataset**<br/>
 
-Added Gaussian noise, mean 0, std dev 10
+Added Gaussian noise, mean 0, std dev 10<br/>
 Spatially adaptive smoothing Wiener Filter
 <p align="center">
-  <img src="test_results/test_results_noise_std_10.png" width="320" height="240"/>
+  <img src="test_results/test_results_noise_std_10.png" width="420" height="340"/>
 </p>
 
 
-Added Gaussian noise, mean 0, std dev 30
+Added Gaussian noise, mean 0, std dev 30<br/>
 Spatially adaptive smoothing Wiener Filter
 <p align="center">
-  <img src="test_results/test_results_noise_std_30.png" width="320" height="240"/>
+  <img src="test_results/test_results_noise_std_30.png" width="420" height="340"/>
 </p>
