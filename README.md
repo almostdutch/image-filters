@@ -1,4 +1,4 @@
-Arsenal of image processing filters (in spatial domain):
+**Arsenal of image processing filters (in spatial domain)**:
     
 * Histogram equalization
 
