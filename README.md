@@ -36,3 +36,18 @@ Arsenal of image processing filters (in spatial domain):
 * High boost filter (application: edge enhancement and de-enhancement)
 
 * Homomorphic filter (application: contrast enhancement in dark and bright regions)
+
+**Dummy dataset**<br/>
+
+Added Gaussian noise, mean 0, std dev 10
+Spatially adaptive smoothing Wiener Filter
+<p align="center">
+  <img src="test_results/test_results_noise_std_10.png" width="320" height="240"/>
+</p>
+
+
+Added Gaussian noise, mean 0, std dev 30
+Spatially adaptive smoothing Wiener Filter
+<p align="center">
+  <img src="test_results/test_results_noise_std_30.png" width="320" height="240"/>
+</p>
